@@ -16,6 +16,7 @@ const pool = new Pool({
   allowExitOnIdle: true,
 });
 
+// GET
 app.get("/posts", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM posts ORDER BY id ASC");
@@ -26,6 +27,7 @@ app.get("/posts", async (req, res) => {
   }
 });
 
+// POST
 app.post("/posts", async (req, res) => {
   try {
     const { titulo, img, descripcion } = req.body;
@@ -41,6 +43,42 @@ app.post("/posts", async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send("Error al crear el post");
+  }
+});
+
+// PUT (LIKE)
+app.put("/posts/like/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const consulta = `
+      UPDATE posts
+      SET likes = likes + 1
+      WHERE id = $1
+      RETURNING *;
+    `;
+
+    const result = await pool.query(consulta, [id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error al dar like al post");
+  }
+});
+
+// DELETE
+app.delete("/posts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const consulta = "DELETE FROM posts WHERE id = $1 RETURNING *";
+
+    const result = await pool.query(consulta, [id]);
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error al eliminar el post");
   }
 });
 
